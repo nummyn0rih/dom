@@ -9,23 +9,13 @@ function validateForm(obj) {
     const profileForm = document.getElementById('profile');
 
     profileForm.addEventListener('focus', (event) => {
-        if (event.target.className == obj.inputErrorClass) event.target.className = '';
+        if (event.target.nodeName != 'INPUT') return;
+        event.target.className = '';
     }, true)
 
     profileForm.addEventListener('blur', (event) => {
-        let target = event.target;
-        if (target.nodeName != 'INPUT') return;
-        if (target.dataset.validator == 'letters') {
-            if (!isLetters(target.value)) target.className = obj.inputErrorClass;
-        };
-        if (target.dataset.validator == 'number') {
-            if (!isNumber(target.value, target.dataset.validatorMin, 
-                target.dataset.validatorMax)) target.className = obj.inputErrorClass;
-        };
-        if (target.dataset.validator == 'regexp') {
-            if (!isPhone(target.value, target.dataset.validatorPattern))
-                target.className = obj.inputErrorClass;
-        };
+        if (event.target.nodeName != 'INPUT') return;
+        validation(event.target, event.target.dataset.validator);
     }, true);
     
     profileForm.addEventListener('submit', function(event) {
@@ -33,25 +23,44 @@ function validateForm(obj) {
         for (let input of profileForm) {
             if (input.hasAttribute('data-required')) {
                 if (input.value != '') continue;
+                input.className = obj.inputErrorClass;
                 profileForm.className = obj.formInvalidClass;
-                input.focus();
+                input.blur();
                 return;
+            };
+            if (input == document.activeElement) {
+                validation(input, input.dataset.validator);
             };
             if (input.className == obj.inputErrorClass) {
                 profileForm.className = obj.formInvalidClass;
-                input.focus();
+                input.blur();
                 return;
-            }
-            if (input == document.activeElement) {
-                console.log(input.value);
-            }
+            };
         }
         profileForm.className = obj.formValidClass;
+        document.activeElement.blur();
     })
+
+    function validation(node, validator) {
+        switch (validator) {
+            case 'letters':
+                if (!isLetters(node.value)) node.className = obj.inputErrorClass;
+                break;
+            case 'number': {
+                if (!isNumber(node.value, node.dataset.validatorMin, 
+                    node.dataset.validatorMax)) node.className = obj.inputErrorClass;
+                break;
+            }
+            case 'regexp': {
+                if (!isPhone(node.value, node.dataset.validatorPattern))
+                    node.className = obj.inputErrorClass;
+                break;
+            }
+        }
+    }
 
     function isLetters(name) {
         return name.search(/^[a-zа-я]+$/ig) != -1;
-        //https://developer.mozilla.org/ru/docs/Learn/HTML/Forms/%D0%92%D0%B0%D0%BB%D0%B8%D0%B4%D0%B0%D1%86%D0%B8%D1%8F_%D1%84%D0%BE%D1%80%D0%BC%D1%8B
     }
 
     function isNumber(num, min, max) {
@@ -61,7 +70,9 @@ function validateForm(obj) {
     }
     
     function isPhone(phone, pattern) {
+        if (phone == '') return true;
         return phone.search(pattern) != -1;
     }
 }
 
+//https://developer.mozilla.org/ru/docs/Learn/HTML/Forms/%D0%92%D0%B0%D0%BB%D0%B8%D0%B4%D0%B0%D1%86%D0%B8%D1%8F_%D1%84%D0%BE%D1%80%D0%BC%D1%8B
